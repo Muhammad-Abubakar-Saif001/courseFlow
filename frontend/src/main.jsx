@@ -75,7 +75,7 @@ function App() {
   const [editingCourse, setEditingCourse] = useState(null);
   const [showCourseForm, setShowCourseForm] = useState(false);
   const [paymentCourse, setPaymentCourse] = useState(null);
-  const [message, setMessage] = useState('Please login to continue.');
+  const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -87,15 +87,19 @@ function App() {
     setPage(1);
   }, [query, filters]);
 
+  function showToast(message, type = 'success') {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  }
+
   async function refreshSession(authToken = token) {
     try {
       setLoading(true);
       const me = await apiRequest('/auth/me', { token: authToken });
       setUser(me.user);
       await loadData(authToken, me.user);
-      setMessage('Login successful');
     } catch (error) {
-      setMessage(error.message);
+      showToast(error.message, 'error');
       logout();
     } finally {
       setLoading(false);
@@ -147,9 +151,9 @@ function App() {
       setUser(payload.user);
       await loadData(payload.token, payload.user);
       setActiveView('dashboard');
-      setMessage('Login successful');
+      showToast('Login successful');
     } catch (error) {
-      setMessage(error.message);
+      showToast(error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -165,6 +169,7 @@ function App() {
     setEnrolledCourses([]);
     setStudentRoster([]);
     setActiveView('dashboard');
+    showToast('Logged out');
   }
 
   async function saveCourse(course) {
@@ -177,13 +182,13 @@ function App() {
       setShowCourseForm(false);
       setEditingCourse(null);
       await loadData(token, user);
-      setMessage(
+      showToast(
         payload.course.status === 'Pending'
-          ? 'Course submitted to admins for approval.'
+          ? 'Course submitted for approval.'
           : 'Course saved successfully.',
       );
     } catch (error) {
-      setMessage(error.message);
+      showToast(error.message, 'error');
     }
   }
 
@@ -191,9 +196,9 @@ function App() {
     try {
       await apiRequest(`/courses/${courseId}`, { method: 'DELETE', token });
       await loadData(token, user);
-      setMessage('Course deleted.');
+      showToast('Course deleted.');
     } catch (error) {
-      setMessage(error.message);
+      showToast(error.message, 'error');
     }
   }
 
@@ -206,9 +211,9 @@ function App() {
         token,
       });
       await loadData(token, user);
-      setMessage(`Course ${decision.toLowerCase()}.`);
+      showToast(`Course ${decision.toLowerCase()}.`);
     } catch (error) {
-      setMessage(error.message);
+      showToast(error.message, 'error');
     }
   }
 
@@ -220,9 +225,9 @@ function App() {
         token,
       });
       await loadData(token, user);
-      setMessage(`Enrollment ${decision.toLowerCase()}.`);
+      showToast(`Enrollment ${decision.toLowerCase()}.`);
     } catch (error) {
-      setMessage(error.message);
+      showToast(error.message, 'error');
     }
   }
 
@@ -230,9 +235,9 @@ function App() {
     try {
       await apiRequest(`/courses/${courseId}/enroll`, { method: 'POST', token });
       await loadData(token, user);
-      setMessage('Enrollment saved.');
+      showToast('Enrollment request sent.');
     } catch (error) {
-      setMessage(error.message);
+      showToast(error.message, 'error');
     }
   }
 
@@ -245,7 +250,7 @@ function App() {
       });
       await loadData(token, user);
     } catch (error) {
-      setMessage(error.message);
+      showToast(error.message, 'error');
     }
   }
 
@@ -253,9 +258,9 @@ function App() {
     try {
       await apiRequest('/users/instructors', { method: 'POST', body: form, token });
       await loadData(token, user);
-      setMessage('Instructor account created.');
+      showToast('Instructor account created.');
     } catch (error) {
-      setMessage(error.message);
+      showToast(error.message, 'error');
     }
   }
 
@@ -263,9 +268,9 @@ function App() {
     try {
       await apiRequest(`/users/${userId}/status`, { method: 'PATCH', token });
       await loadData(token, user);
-      setMessage('User status updated.');
+      showToast('User status updated.');
     } catch (error) {
-      setMessage(error.message);
+      showToast(error.message, 'error');
     }
   }
 
@@ -315,14 +320,14 @@ function App() {
   }, [courses, enrolledCourses, user]);
 
   if (!user) {
-    return <AuthScreen loading={loading} message={message} onSubmit={authenticate} />;
+    return <AuthScreen loading={loading} onSubmit={authenticate} />;
   }
 
   return (
     <div className="app-shell">
       <Sidebar activeView={activeView} setActiveView={setActiveView} role={user.role} />
       <main className="main-area">
-        <Topbar user={user} message={message} onLogout={logout} />
+        <Topbar user={user} onLogout={logout} />
 
         {activeView === 'dashboard' && (
           <Dashboard
@@ -418,11 +423,13 @@ function App() {
           }}
         />
       )}
+
+      {toast && <Toast message={toast.message} type={toast.type} />}
     </div>
   );
 }
 
-function AuthScreen({ loading, message, onSubmit }) {
+function AuthScreen({ loading, onSubmit }) {
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ name: '', email: '', password: '' });
 
@@ -467,7 +474,6 @@ function AuthScreen({ loading, message, onSubmit }) {
           <LockKeyhole size={18} />
           {mode === 'login' ? 'Login' : 'Create student account'}
         </button>
-        <p className="auth-message">{message}</p>
       </form>
     </main>
   );
@@ -518,13 +524,12 @@ function Sidebar({ activeView, setActiveView, role }) {
   );
 }
 
-function Topbar({ user, message, onLogout }) {
+function Topbar({ user, onLogout }) {
   return (
     <header className="topbar">
       <div>
         <p className="eyebrow">Authenticated {user.role} session</p>
         <h1>Welcome back, {user.name}.</h1>
-        <span className={message === 'Login successful' ? 'api-status online' : 'api-status'}>{message}</span>
       </div>
       <div className="profile-chip">
         <div className="avatar">{user.name.slice(0, 1)}</div>
@@ -1078,6 +1083,14 @@ function Field({ label, value, onChange, type = 'text', required = false }) {
       <span>{label}</span>
       <input type={type} value={value} onChange={(event) => onChange(event.target.value)} required={required} />
     </label>
+  );
+}
+
+function Toast({ message, type }) {
+  return (
+    <div className={`toast ${type}`}>
+      {message}
+    </div>
   );
 }
 
