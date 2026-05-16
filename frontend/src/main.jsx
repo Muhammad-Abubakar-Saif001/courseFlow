@@ -639,7 +639,7 @@ function Marketplace({
       <div className="section-heading">
         <div>
           <p className="eyebrow">{user.role === 'student' ? 'Marketplace' : 'Course operations'}</p>
-          <h2>{user.role === 'student' ? 'Approved courses' : 'Database-backed courses'}</h2>
+          <h2>{user.role === 'student' ? 'Approved courses' : 'Offered Courses'}</h2>
         </div>
         <span className="result-count">{total} results</span>
       </div>
