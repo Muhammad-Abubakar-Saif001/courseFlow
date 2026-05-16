@@ -96,17 +96,26 @@ Production frontend: `https://web-project-courseflow.vercel.app`
 
 Production backend API: `https://web-project-yj6g.onrender.com/api`
 
-## Seeded Admin Accounts
+## Platform Tutorial
 
-The seed file creates three admins:
+Welcome to CourseFlow! Here is a full tutorial on how to use the platform across its three main roles: Student, Instructor, and Admin.
 
-```text
-abubakar@gmail.com / 11223344
-awais@gmail.com / 11223344
-bilal@gmail.com / 11223344
-```
+### 1. Student Experience
+- **Registration:** Anyone can visit the site and create an account. By default, new accounts are created as Students.
+- **Browsing:** Students can explore the "Marketplace" to see all approved courses. They can use the search bar, category filters, and sorting options to find the perfect course.
+- **Enrolling & Payment:** When a student finds a course they want, they click "Enroll". A payment modal will appear with instructions to manually send the course fee (in PKR) via NayaPay to the provided account details. After confirming, the enrollment goes into a "Payment Pending Approval" state.
+- **My Learning:** Students can track their approved enrollments in the "My Learning" dashboard, where they can mark lessons as complete and track their overall progress.
 
-New public registrations are always created as students. Admins can create instructor accounts from the admin panel.
+### 2. Instructor Experience
+- **Account Creation:** Instructors cannot register themselves. They must be invited and created by an Admin from the Admin Panel.
+- **Course Creation:** Once logged in, Instructors can create new courses via their dashboard. They fill out course details, including title, category, description, and price (in PKR). 
+- **Approval Workflow:** Newly created courses are marked as "Pending" and are not visible in the public marketplace until an Admin reviews and approves them.
+- **Student Roster:** Instructors can view a list of all students enrolled in their active courses and track their learning progress.
+
+### 3. Admin Experience
+- **User Management:** Admins have full access to manage all users on the platform. They can view the user list, change roles, or suspend active accounts.
+- **Course Moderation:** Admins review "Pending" courses submitted by instructors. They can "Approve" them to go live in the marketplace or "Deny" them.
+- **Payment Approvals:** When a student confirms a NayaPay manual payment, the request appears in the "Payment Approvals" queue on the Admin Panel. The admin verifies the NayaPay transaction and clicks "Approve" to grant the student access to the course content, or "Deny" if the payment was not received (which removes the enrollment request).
 
 ## Useful Commands
 
