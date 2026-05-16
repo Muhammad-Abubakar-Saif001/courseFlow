@@ -68,11 +68,13 @@ function App() {
   const [instructors, setInstructors] = useState([]);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [studentRoster, setStudentRoster] = useState([]);
+  const [pendingEnrollments, setPendingEnrollments] = useState([]);
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState({ category: 'All', level: 'All', status: 'All', sort: 'popular' });
   const [page, setPage] = useState(1);
   const [editingCourse, setEditingCourse] = useState(null);
   const [showCourseForm, setShowCourseForm] = useState(false);
+  const [paymentCourse, setPaymentCourse] = useState(null);
   const [message, setMessage] = useState('Please login to continue.');
   const [loading, setLoading] = useState(false);
 
@@ -105,14 +107,16 @@ function App() {
     setCourses(coursePayload.courses);
 
     if (currentUser?.role === 'admin') {
-      const [usersPayload, instructorsPayload, rosterPayload] = await Promise.all([
+      const [usersPayload, instructorsPayload, rosterPayload, pendingPayload] = await Promise.all([
         apiRequest('/users', { token: authToken }),
         apiRequest('/users/instructors', { token: authToken }),
         apiRequest('/instructor/students', { token: authToken }),
+        apiRequest('/enrollments/pending', { token: authToken }),
       ]);
       setUsers(usersPayload.users);
       setInstructors(instructorsPayload.instructors);
       setStudentRoster(rosterPayload.enrollments);
+      setPendingEnrollments(pendingPayload.enrollments);
       setEnrolledCourses([]);
     }
 
@@ -203,6 +207,20 @@ function App() {
       });
       await loadData(token, user);
       setMessage(`Course ${decision.toLowerCase()}.`);
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  async function decideEnrollment(enrollmentId, decision) {
+    try {
+      await apiRequest(`/enrollments/${enrollmentId}/decision`, {
+        method: 'PATCH',
+        body: { decision },
+        token,
+      });
+      await loadData(token, user);
+      setMessage(`Enrollment ${decision.toLowerCase()}.`);
     } catch (error) {
       setMessage(error.message);
     }
@@ -334,7 +352,10 @@ function App() {
             setQuery={setQuery}
             filters={filters}
             setFilters={setFilters}
-            onEnroll={enroll}
+            onEnroll={(courseId) => {
+              const course = courses.find((c) => c.id === courseId);
+              setPaymentCourse(course);
+            }}
             onEdit={(course) => {
               setEditingCourse(course);
               setShowCourseForm(true);
@@ -357,9 +378,11 @@ function App() {
             users={users}
             courses={courses}
             instructors={instructors}
+            pendingEnrollments={pendingEnrollments}
             createInstructor={createInstructor}
             cycleUserStatus={cycleUserStatus}
             onDecision={decideCourse}
+            onEnrollmentDecision={decideEnrollment}
             onNewCourse={() => {
               setEditingCourse(null);
               setShowCourseForm(true);
@@ -382,6 +405,17 @@ function App() {
             setEditingCourse(null);
           }}
           onSave={saveCourse}
+        />
+      )}
+
+      {paymentCourse && (
+        <PaymentModal
+          course={paymentCourse}
+          onClose={() => setPaymentCourse(null)}
+          onConfirm={() => {
+            enroll(paymentCourse.id);
+            setPaymentCourse(null);
+          }}
         />
       )}
     </div>
@@ -721,10 +755,16 @@ function Learning({ courses, updateProgress }) {
                     <span style={{ width: `${course.progress}%` }} />
                   </div>
                 </div>
-                <div className="hero-actions">
-                  <button className="primary-btn compact" onClick={() => updateProgress(course.id, 10)}>Complete lesson</button>
-                  <button className="secondary-btn compact" onClick={() => updateProgress(course.id, -10)}>Reopen</button>
-                </div>
+                {course.enrollmentStatus === 'Pending' ? (
+                  <div className="hero-actions">
+                    <span className="api-status">Payment Pending Approval</span>
+                  </div>
+                ) : (
+                  <div className="hero-actions">
+                    <button className="primary-btn compact" onClick={() => updateProgress(course.id, 10)}>Complete lesson</button>
+                    <button className="secondary-btn compact" onClick={() => updateProgress(course.id, -10)}>Reopen</button>
+                  </div>
+                )}
               </div>
             ))}
             {!courses.length && <p className="muted">You are not enrolled in any courses yet.</p>}
@@ -769,7 +809,7 @@ function Roster({ enrollments }) {
   );
 }
 
-function AdminPanel({ users, courses, instructors, createInstructor, cycleUserStatus, onDecision, onNewCourse, onEdit }) {
+function AdminPanel({ users, courses, instructors, pendingEnrollments, createInstructor, cycleUserStatus, onDecision, onEnrollmentDecision, onNewCourse, onEdit }) {
   const pending = courses.filter((course) => course.status === 'Pending');
   return (
     <section className="view-stack">
@@ -787,6 +827,24 @@ function AdminPanel({ users, courses, instructors, createInstructor, cycleUserSt
         <section className="panel">
           <PanelHeader icon={UserCog} title="Add Instructor" />
           <InstructorForm onSubmit={createInstructor} />
+        </section>
+        <section className="panel">
+          <PanelHeader icon={Filter} title="Payment Approvals" />
+          <div className="status-list">
+            {pendingEnrollments.map((enrollment) => (
+              <div key={enrollment.enrollment_id} className="moderation-item">
+                <div>
+                  <strong>{enrollment.student_name}</strong>
+                  <span>{enrollment.course_title}</span>
+                </div>
+                <div className="hero-actions">
+                  <button className="primary-btn compact" onClick={() => onEnrollmentDecision(enrollment.enrollment_id, 'Approved')}>Approve</button>
+                  <button className="secondary-btn compact" onClick={() => onEnrollmentDecision(enrollment.enrollment_id, 'Denied')}>Deny</button>
+                </div>
+              </div>
+            ))}
+            {!pendingEnrollments.length && <p className="muted">No pending payments.</p>}
+          </div>
         </section>
         <section className="panel">
           <PanelHeader icon={Filter} title="Course Requests" />
@@ -929,6 +987,40 @@ function CourseModal({ user, course, instructors, onClose, onSave }) {
           <button type="submit" className="primary-btn">Save course</button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function PaymentModal({ course, onClose, onConfirm }) {
+  return (
+    <div className="modal-backdrop" role="dialog" aria-modal="true">
+      <div className="modal" style={{ maxWidth: '400px' }}>
+        <div className="modal-header">
+          <div>
+            <p className="eyebrow">Payment Required</p>
+            <h2>{course.title}</h2>
+          </div>
+          <button type="button" className="icon-btn" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+        <div style={{ padding: '20px', background: '#f8fafc', borderRadius: '8px', marginBottom: '20px' }}>
+          <p style={{ margin: '0 0 10px', fontSize: '0.9rem', color: '#475569' }}>Please send <strong>${course.price}</strong> to the following account:</p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '1rem', color: '#0f172a' }}>
+            <li style={{ marginBottom: '8px' }}><strong>Account Title:</strong> Muhammad Abubakar Saif</li>
+            <li style={{ marginBottom: '8px' }}><strong>Payment Account Number:</strong> 03306664425</li>
+            <li><strong>Pay through:</strong> Nayapay</li>
+          </ul>
+          <p style={{ margin: '15px 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+            After you confirm your payment, the approval request will be sent to the admin.
+            The admin will approve the request within 24 hours.
+          </p>
+        </div>
+        <div className="modal-actions">
+          <button type="button" className="secondary-btn" onClick={onClose}>Cancel</button>
+          <button type="button" className="primary-btn" onClick={onConfirm}>Confirm Payment</button>
+        </div>
+      </div>
     </div>
   );
 }

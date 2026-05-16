@@ -68,3 +68,7 @@ create index if not exists courses_category_idx on courses(category);
 create index if not exists courses_instructor_idx on courses(instructor_id);
 create index if not exists enrollments_student_idx on enrollments(student_id);
 create index if not exists enrollments_course_idx on enrollments(course_id);
+
+alter table enrollments add column if not exists status text not null default 'Pending';
+alter table enrollments drop constraint if exists enrollments_status_check;
+alter table enrollments add constraint enrollments_status_check check (status in ('Pending', 'Approved', 'Denied'));

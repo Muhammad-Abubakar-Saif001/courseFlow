@@ -390,7 +390,7 @@ app.post('/api/courses/:id/enroll', requireAuth, requireRole(['student']), async
        on conflict (student_id, course_id) do nothing`,
       [`enr-${randomUUID().slice(0, 10)}`, req.user.sub, req.params.id],
     );
-    await query('update courses set students = (select count(*) from enrollments where course_id = $1) where id = $1', [
+    await query("update courses set students = (select count(*) from enrollments where course_id = $1 and status = 'Approved') where id = $1", [
       req.params.id,
     ]);
 
@@ -404,14 +404,14 @@ app.post('/api/courses/:id/enroll', requireAuth, requireRole(['student']), async
 app.get('/api/me/enrollments', requireAuth, requireRole(['student']), async (req, res, next) => {
   try {
     const result = await query(
-      `select c.*, e.progress
+      `select c.*, e.progress, e.status as enrollment_status
        from enrollments e
        join courses c on c.id = e.course_id
        where e.student_id = $1
        order by e.enrolled_at desc`,
       [req.user.sub],
     );
-    res.json({ courses: result.rows.map(publicCourse) });
+    res.json({ courses: result.rows.map(row => ({ ...publicCourse(row), enrollmentStatus: row.enrollment_status })) });
   } catch (error) {
     next(error);
   }
@@ -475,6 +475,50 @@ app.get('/api/instructor/students', requireAuth, requireRole(['instructor', 'adm
         enrolled: row.enrolled_at?.toISOString?.().slice(0, 10) || row.enrolled_at,
       })),
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/enrollments/pending', requireAuth, requireRole(['admin']), async (req, res, next) => {
+  try {
+    const result = await query(
+      `select e.id as enrollment_id, u.name as student_name, u.email as student_email, c.title as course_title, e.enrolled_at
+       from enrollments e
+       join users u on u.id = e.student_id
+       join courses c on c.id = e.course_id
+       where e.status = 'Pending'
+       order by e.enrolled_at asc`
+    );
+    res.json({ enrollments: result.rows });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch('/api/enrollments/:id/decision', requireAuth, requireRole(['admin']), async (req, res, next) => {
+  try {
+    const { decision } = req.body;
+    if (!['Approved', 'Denied'].includes(decision)) {
+      return res.status(400).json({ message: 'Decision must be Approved or Denied.' });
+    }
+
+    const result = await query(
+      `update enrollments
+       set status = $1
+       where id = $2
+       returning *`,
+      [decision, req.params.id]
+    );
+    if (!result.rowCount) return res.status(404).json({ message: 'Enrollment not found.' });
+
+    if (decision === 'Approved') {
+       await query("update courses set students = (select count(*) from enrollments where course_id = $1 and status = 'Approved') where id = $1", [
+         result.rows[0].course_id,
+       ]);
+    }
+
+    res.json({ enrollment: result.rows[0] });
   } catch (error) {
     next(error);
   }
