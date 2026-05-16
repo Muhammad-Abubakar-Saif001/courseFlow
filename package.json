@@ -12,7 +12,9 @@
     "preview": "vite preview --config frontend/vite.config.js --host 127.0.0.1",
     "lint": "eslint .",
     "db:schema": "node backend/src/runSql.js backend/db/schema.sql",
-    "db:seed": "node backend/src/runSql.js backend/db/seed.sql"
+    "db:seed": "node backend/src/runSql.js backend/db/seed.sql",
+    "db:psql:supabase": "psql -h db.nqrfskmrepojqmurjrvo.supabase.co -p 5432 -d postgres -U postgres",
+    "skills:supabase": "npx skills add supabase/agent-skills"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.4",

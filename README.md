@@ -48,17 +48,28 @@ Create your environment file:
 copy .env.example .env
 ```
 
-Update `.env` with your PostgreSQL connection:
+Update `.env` with your Supabase PostgreSQL connection:
 
 ```text
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/courseflow
+DATABASE_URL=postgresql://postgres:<YOUR-SUPABASE-PASSWORD>@db.nqrfskmrepojqmurjrvo.supabase.co:5432/postgres?sslmode=require
 JWT_SECRET=replace-this-with-a-long-random-secret
 ```
 
-Create and seed the database:
+You can also connect with `psql`:
 
 ```bash
-createdb courseflow
+psql -h db.nqrfskmrepojqmurjrvo.supabase.co -p 5432 -d postgres -U postgres
+```
+
+Or use the helper script:
+
+```bash
+npm run db:psql:supabase
+```
+
+Create and seed the Supabase database:
+
+```bash
 npm run db:schema
 npm run db:seed
 ```
@@ -92,6 +103,22 @@ npm run dev:frontend
 npm run dev:api
 npm run lint
 npm run build
+npm run db:psql:supabase
+npm run skills:supabase
+```
+
+## Supabase Agent Skills
+
+To install the Supabase agent skills helper, run:
+
+```bash
+npm run skills:supabase
+```
+
+This runs:
+
+```bash
+npx skills add supabase/agent-skills
 ```
 
 ## GitHub

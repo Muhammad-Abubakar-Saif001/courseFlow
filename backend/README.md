@@ -19,6 +19,16 @@ copy .env.example .env
 
 3. Update `DATABASE_URL` in `.env`.
 
+```text
+DATABASE_URL=postgresql://postgres:<YOUR-SUPABASE-PASSWORD>@db.nqrfskmrepojqmurjrvo.supabase.co:5432/postgres?sslmode=require
+```
+
+You can open a Supabase `psql` session with:
+
+```bash
+npm run db:psql:supabase
+```
+
 4. Run schema and seed:
 
 ```bash
