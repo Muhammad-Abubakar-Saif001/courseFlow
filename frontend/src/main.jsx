@@ -16,10 +16,12 @@ import {
   LibraryBig,
   LockKeyhole,
   LogOut,
+  Moon,
   Plus,
   Search,
   ShieldCheck,
   Star,
+  Sun,
   Trash2,
   UserCog,
   Users,
@@ -62,6 +64,7 @@ async function apiRequest(path, { method = 'GET', body, token } = {}) {
 function App() {
   const [token, setToken] = useState(() => localStorage.getItem('courseflow-token') || '');
   const [user, setUser] = useState(null);
+  const [theme, setTheme] = useState(() => localStorage.getItem('courseflow-theme') || 'light');
   const [activeView, setActiveView] = useState('dashboard');
   const [courses, setCourses] = useState([]);
   const [users, setUsers] = useState([]);
@@ -82,6 +85,11 @@ function App() {
     if (!token) return;
     refreshSession(token);
   }, [token]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('courseflow-theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     setPage(1);
@@ -325,7 +333,13 @@ function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar activeView={activeView} setActiveView={setActiveView} role={user.role} />
+      <Sidebar 
+        activeView={activeView} 
+        setActiveView={setActiveView} 
+        role={user.role} 
+        theme={theme} 
+        toggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')} 
+      />
       <main className="main-area">
         <Topbar user={user} onLogout={logout} />
 
@@ -479,7 +493,7 @@ function AuthScreen({ loading, onSubmit }) {
   );
 }
 
-function Sidebar({ activeView, setActiveView, role }) {
+function Sidebar({ activeView, setActiveView, role, theme, toggleTheme }) {
   const items = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'marketplace', label: role === 'student' ? 'Marketplace' : 'Courses', icon: LibraryBig },
@@ -515,6 +529,11 @@ function Sidebar({ activeView, setActiveView, role }) {
               </button>
             );
           })}
+        
+        <button className="nav-item" onClick={toggleTheme} style={{ marginTop: '12px' }}>
+          {theme === 'light' ? <Moon size={19} /> : <Sun size={19} />}
+          <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+        </button>
       </nav>
       <div className="sidebar-footer">
         <LockKeyhole size={18} />
