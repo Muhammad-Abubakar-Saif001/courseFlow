@@ -440,10 +440,10 @@ function AuthScreen({ loading, message, onSubmit }) {
           </div>
           <div>
             <strong>CourseFlow</strong>
-            <span>PostgreSQL learning platform</span>
+            <span>Interactive learning platform</span>
           </div>
         </div>
-        <h1>Login to manage learning from real database records.</h1>
+        <h1>Login to manage your learning journey.</h1>
         <p>
           Students register by default, instructors are created by admins, and course publishing
           goes through admin approval.
@@ -512,7 +512,7 @@ function Sidebar({ activeView, setActiveView, role }) {
       </nav>
       <div className="sidebar-footer">
         <LockKeyhole size={18} />
-        <p>Every visible record is fetched from PostgreSQL through the Node API.</p>
+        <p>All data is securely synced and updated in real-time.</p>
       </div>
     </aside>
   );
@@ -552,8 +552,8 @@ function Dashboard({ user, stats, courses, enrolledCourses, studentRoster, setAc
             {user.role === 'admin' && 'Create instructors, publish courses, and moderate new submissions.'}
           </h2>
           <p>
-            Authentication, course approvals, enrollments, and dashboards are powered by the
-            backend API and PostgreSQL.
+            Authentication, course approvals, enrollments, and dashboards are powered by our 
+            secure backend infrastructure.
           </p>
           <div className="hero-actions">
             <button className="primary-btn" onClick={() => setActiveView('marketplace')}>
@@ -576,7 +576,7 @@ function Dashboard({ user, stats, courses, enrolledCourses, studentRoster, setAc
       </div>
 
       <div className="stat-grid">
-        <StatCard icon={LibraryBig} label="Courses" value={stats.totalCourses} trend="Database records" />
+        <StatCard icon={LibraryBig} label="Courses" value={stats.totalCourses} trend="Total offerings" />
         <StatCard icon={Activity} label="Pending" value={stats.pending} trend="Admin review queue" />
         <StatCard icon={Star} label="Avg. rating" value={stats.avgRating.toFixed(1)} trend="Approved catalog" />
         <StatCard icon={BarChart3} label="Revenue" value={`PKR ${Math.round(stats.revenue).toLocaleString()}`} trend="From enrollments" />
@@ -646,7 +646,7 @@ function Marketplace({
       <div className="toolbar">
         <label className="search-box">
           <Search size={18} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search database courses..." />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search for courses..." />
         </label>
         <Select label="Category" value={filters.category} onChange={(category) => setFilters({ ...filters, category })} options={categories} />
         <Select label="Level" value={filters.level} onChange={(level) => setFilters({ ...filters, level })} options={['All', 'Beginner', 'Intermediate', 'Advanced']} />
@@ -733,7 +733,7 @@ function Learning({ courses, updateProgress }) {
       <div className="section-heading">
         <div>
           <p className="eyebrow">My learning</p>
-          <h2>Enrolled courses from PostgreSQL</h2>
+          <h2>Your enrolled courses</h2>
         </div>
       </div>
       <div className="learning-layout">
