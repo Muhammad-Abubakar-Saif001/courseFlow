@@ -579,7 +579,7 @@ function Dashboard({ user, stats, courses, enrolledCourses, studentRoster, setAc
         <StatCard icon={LibraryBig} label="Courses" value={stats.totalCourses} trend="Database records" />
         <StatCard icon={Activity} label="Pending" value={stats.pending} trend="Admin review queue" />
         <StatCard icon={Star} label="Avg. rating" value={stats.avgRating.toFixed(1)} trend="Approved catalog" />
-        <StatCard icon={BarChart3} label="Revenue" value={`$${Math.round(stats.revenue).toLocaleString()}`} trend="From enrollments" />
+        <StatCard icon={BarChart3} label="Revenue" value={`PKR ${Math.round(stats.revenue).toLocaleString()}`} trend="From enrollments" />
       </div>
 
       <div className="content-grid">
@@ -684,7 +684,7 @@ function CourseCard({ user, course, onEnroll, onEdit, onDelete, onDecision }) {
     <article className="course-card">
       <div className="course-cover">
         <span>{course.category}</span>
-        <strong>${course.price}</strong>
+        <strong>PKR {course.price}</strong>
       </div>
       <div className="course-body">
         <div className="course-title-row">
@@ -1005,7 +1005,7 @@ function PaymentModal({ course, onClose, onConfirm }) {
           </button>
         </div>
         <div style={{ padding: '20px', background: '#f8fafc', borderRadius: '8px', marginBottom: '20px' }}>
-          <p style={{ margin: '0 0 10px', fontSize: '0.9rem', color: '#475569' }}>Please send <strong>${course.price}</strong> to the following account:</p>
+          <p style={{ margin: '0 0 10px', fontSize: '0.9rem', color: '#475569' }}>Please send <strong>PKR {course.price}</strong> to the following account:</p>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '1rem', color: '#0f172a' }}>
             <li style={{ marginBottom: '8px' }}><strong>Account Title:</strong> Muhammad Abubakar Saif</li>
             <li style={{ marginBottom: '8px' }}><strong>Payment Account Number:</strong> 03306664425</li>
