@@ -504,9 +504,17 @@ app.patch('/api/enrollments/:id/decision', requireAuth, requireRole(['admin']), 
     }
 
     if (decision === 'Denied') {
-      const result = await query('delete from enrollments where id = $1 returning *', [req.params.id]);
-      if (!result.rowCount) return res.status(404).json({ message: 'Enrollment not found.' });
-      return res.json({ enrollment: result.rows[0] });
+      const existing = await query('select course_id from enrollments where id = $1', [req.params.id]);
+      if (!existing.rowCount) return res.status(404).json({ message: 'Enrollment not found.' });
+      
+      const courseId = existing.rows[0].course_id;
+      await query('delete from enrollments where id = $1', [req.params.id]);
+      
+      await query("update courses set students = (select count(*) from enrollments where course_id = $1 and status = 'Approved') where id = $1", [
+        courseId,
+      ]);
+      
+      return res.json({ message: 'Enrollment denied and removed.' });
     }
 
     const result = await query(
@@ -518,11 +526,9 @@ app.patch('/api/enrollments/:id/decision', requireAuth, requireRole(['admin']), 
     );
     if (!result.rowCount) return res.status(404).json({ message: 'Enrollment not found.' });
 
-    if (decision === 'Approved') {
-       await query("update courses set students = (select count(*) from enrollments where course_id = $1 and status = 'Approved') where id = $1", [
-         result.rows[0].course_id,
-       ]);
-    }
+    await query("update courses set students = (select count(*) from enrollments where course_id = $1 and status = 'Approved') where id = $1", [
+      result.rows[0].course_id,
+    ]);
 
     res.json({ enrollment: result.rows[0] });
   } catch (error) {
