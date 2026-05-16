@@ -452,8 +452,8 @@ function AuthScreen({ loading, onSubmit }) {
         </div>
         <h1>Login to manage your learning journey.</h1>
         <p>
-          Students register by default, instructors are created by admins, and course publishing
-          goes through admin approval.
+          Join our community of lifelong learners. Register as a student to access premium 
+          courses or sign in to continue your professional development.
         </p>
       </section>
       <form className="auth-card" onSubmit={submit}>
