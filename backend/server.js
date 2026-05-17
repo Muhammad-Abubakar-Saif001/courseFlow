@@ -418,14 +418,14 @@ app.post('/api/courses/:id/enroll', requireAuth, requireRole(['student']), async
 app.get('/api/me/enrollments', requireAuth, requireRole(['student']), async (req, res, next) => {
   try {
     const result = await query(
-      `select c.*, e.progress, e.status as enrollment_status
+      `select c.*, e.progress, e.status as enrollment_status, e.completed_lessons
        from enrollments e
        join courses c on c.id = e.course_id
        where e.student_id = $1
        order by e.enrolled_at desc`,
       [req.user.sub],
     );
-    res.json({ courses: result.rows.map(row => ({ ...publicCourse(row), enrollmentStatus: row.enrollment_status })) });
+    res.json({ courses: result.rows.map(row => ({ ...publicCourse(row), enrollmentStatus: row.enrollment_status, completedLessons: row.completed_lessons || [] })) });
   } catch (error) {
     next(error);
   }
@@ -433,24 +433,31 @@ app.get('/api/me/enrollments', requireAuth, requireRole(['student']), async (req
 
 app.patch('/api/me/enrollments/:courseId/progress', requireAuth, requireRole(['student']), async (req, res, next) => {
   try {
-    const amount = parseNumber(req.body.amount);
+    const { completedLessons } = req.body;
+    const courseRes = await query('select lessons from courses where id = $1', [req.params.courseId]);
+    if (!courseRes.rowCount) return res.status(404).json({ message: 'Course not found.' });
+    const totalLessons = courseRes.rows[0].lessons;
+    
+    const safeCompleted = Array.isArray(completedLessons) ? completedLessons : [];
+    const progress = totalLessons > 0 ? Math.round((safeCompleted.length / totalLessons) * 100) : 100;
+    
     const result = await query(
       `update enrollments
-       set progress = least(100, greatest(0, progress + $1))
-       where student_id = $2 and course_id = $3
+       set progress = least(100, greatest(0, $1)), completed_lessons = $2::jsonb
+       where student_id = $3 and course_id = $4
        returning progress`,
-      [amount, req.user.sub, req.params.courseId],
+      [progress, JSON.stringify(safeCompleted), req.user.sub, req.params.courseId],
     );
     if (!result.rowCount) return res.status(404).json({ message: 'Enrollment not found.' });
 
     const course = await query(
-      `select c.*, e.progress
+      `select c.*, e.progress, e.status as enrollment_status, e.completed_lessons
        from enrollments e
        join courses c on c.id = e.course_id
        where e.student_id = $1 and e.course_id = $2`,
       [req.user.sub, req.params.courseId],
     );
-    res.json({ course: publicCourse(course.rows[0]) });
+    res.json({ course: { ...publicCourse(course.rows[0]), enrollmentStatus: course.rows[0].enrollment_status, completedLessons: course.rows[0].completed_lessons || [] } });
   } catch (error) {
     next(error);
   }

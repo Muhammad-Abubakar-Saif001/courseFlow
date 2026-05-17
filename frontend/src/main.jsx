@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   Activity,
+  ArrowLeft,
   BarChart3,
   BookOpen,
   CheckCircle2,
@@ -79,6 +80,7 @@ function App() {
   const [showCourseForm, setShowCourseForm] = useState(false);
   const [paymentCourse, setPaymentCourse] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [activeCourseId, setActiveCourseId] = useState(null);
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -178,6 +180,7 @@ function App() {
     setEnrolledCourses([]);
     setStudentRoster([]);
     setActiveView('dashboard');
+    setActiveCourseId(null);
     showToast('Logged out');
   }
 
@@ -250,14 +253,16 @@ function App() {
     }
   }
 
-  async function updateProgress(courseId, amount) {
+  async function updateProgress(courseId, completedLessons) {
     try {
-      await apiRequest(`/me/enrollments/${courseId}/progress`, {
+      const payload = await apiRequest(`/me/enrollments/${courseId}/progress`, {
         method: 'PATCH',
-        body: { amount },
+        body: { completedLessons },
         token,
       });
-      await loadData(token, user);
+      setEnrolledCourses((prev) =>
+        prev.map((c) => (c.id === courseId ? payload.course : c)),
+      );
     } catch (error) {
       showToast(error.message, 'error');
     }
@@ -390,7 +395,22 @@ function App() {
         )}
 
         {activeView === 'learning' && (
-          <Learning courses={enrolledCourses} updateProgress={updateProgress} />
+          <Learning 
+            courses={enrolledCourses} 
+            setActiveView={setActiveView} 
+            setActiveCourseId={setActiveCourseId} 
+          />
+        )}
+
+        {activeView === 'course-viewer' && activeCourseId && (
+          <CourseViewer 
+            course={enrolledCourses.find(c => c.id === activeCourseId)}
+            updateProgress={updateProgress}
+            onBack={() => {
+              setActiveView('learning');
+              setActiveCourseId(null);
+            }}
+          />
         )}
 
         {activeView === 'roster' && (
@@ -783,7 +803,7 @@ function CourseCard({ user, course, onEnroll, onEdit, onDelete, onDecision }) {
   );
 }
 
-function Learning({ courses, updateProgress }) {
+function Learning({ courses, setActiveView, setActiveCourseId }) {
   return (
     <section className="view-stack">
       <div className="section-heading">
@@ -792,7 +812,7 @@ function Learning({ courses, updateProgress }) {
           <h2>Your enrolled courses</h2>
         </div>
       </div>
-      <div className="learning-layout">
+      <div className="learning-layout" style={{ gridTemplateColumns: '1fr' }}>
         <section className="panel wide">
           <PanelHeader icon={GraduationCap} title="Progress Tracking" />
           <div className="course-list">
@@ -817,13 +837,74 @@ function Learning({ courses, updateProgress }) {
                   </div>
                 ) : (
                   <div className="hero-actions">
-                    <button className="primary-btn compact" onClick={() => updateProgress(course.id, 10)}>Complete lesson</button>
-                    <button className="secondary-btn compact" onClick={() => updateProgress(course.id, -10)}>Reopen</button>
+                    <button 
+                      className="primary-btn compact" 
+                      onClick={() => {
+                        setActiveCourseId(course.id);
+                        setActiveView('course-viewer');
+                      }}
+                    >
+                      Open Course
+                    </button>
                   </div>
                 )}
               </div>
             ))}
             {!courses.length && <p className="muted">You are not enrolled in any courses yet.</p>}
+          </div>
+        </section>
+      </div>
+    </section>
+  );
+}
+
+function CourseViewer({ course, updateProgress, onBack }) {
+  const completedSet = new Set(course.completedLessons || []);
+  const toggleLesson = (lessonIndex) => {
+    const newCompleted = new Set(completedSet);
+    if (newCompleted.has(lessonIndex)) newCompleted.delete(lessonIndex);
+    else newCompleted.add(lessonIndex);
+    updateProgress(course.id, Array.from(newCompleted));
+  };
+
+  const lessons = Array.from({ length: course.lessons }, (_, i) => i + 1);
+
+  return (
+    <section className="view-stack">
+      <div className="section-heading" style={{ display: 'flex', gap: '16px', alignItems: 'center', justifyContent: 'flex-start' }}>
+        <button className="icon-btn" onClick={onBack} title="Back">
+          <ArrowLeft size={18} />
+        </button>
+        <div>
+          <p className="eyebrow">Course Viewer</p>
+          <h2>{course.title}</h2>
+        </div>
+      </div>
+      <div className="learning-layout" style={{ gridTemplateColumns: '1fr' }}>
+        <section className="panel">
+          <div className="progress-wrap large" style={{ marginBottom: '24px' }}>
+            <div className="progress-label">
+              <span>Course Progress</span>
+              <strong>{course.progress}%</strong>
+            </div>
+            <div className="progress-track">
+              <span style={{ width: `${course.progress}%` }} />
+            </div>
+          </div>
+          
+          <h3>Lessons</h3>
+          <div className="lesson-list">
+            {lessons.map((lesson) => (
+              <label key={lesson} className={`lesson-item ${completedSet.has(lesson) ? 'completed' : ''}`}>
+                <input 
+                  type="checkbox" 
+                  checked={completedSet.has(lesson)}
+                  onChange={() => toggleLesson(lesson)}
+                />
+                <span>Lesson {lesson}</span>
+              </label>
+            ))}
+            {lessons.length === 0 && <p className="muted">This course currently has no lessons.</p>}
           </div>
         </section>
       </div>

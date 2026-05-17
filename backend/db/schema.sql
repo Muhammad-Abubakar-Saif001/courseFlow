@@ -72,3 +72,5 @@ create index if not exists enrollments_course_idx on enrollments(course_id);
 alter table enrollments add column if not exists status text not null default 'Pending';
 alter table enrollments drop constraint if exists enrollments_status_check;
 alter table enrollments add constraint enrollments_status_check check (status in ('Pending', 'Approved', 'Denied'));
+
+alter table enrollments add column if not exists completed_lessons jsonb not null default '[]'::jsonb;
