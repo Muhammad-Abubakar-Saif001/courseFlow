@@ -341,9 +341,10 @@ function App() {
         role={user.role} 
         theme={theme} 
         toggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')} 
+        user={user}
+        onLogout={logout}
       />
       <main className="main-area">
-        <Topbar user={user} onLogout={logout} />
 
         {activeView === 'dashboard' && (
           <Dashboard
@@ -495,7 +496,7 @@ function AuthScreen({ loading, onSubmit }) {
   );
 }
 
-function Sidebar({ activeView, setActiveView, role, theme, toggleTheme }) {
+function Sidebar({ activeView, setActiveView, role, theme, toggleTheme, user, onLogout }) {
   const items = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'marketplace', label: role === 'student' ? 'Marketplace' : 'Courses', icon: LibraryBig },
@@ -543,32 +544,17 @@ function Sidebar({ activeView, setActiveView, role, theme, toggleTheme }) {
           </label>
         </div>
       </nav>
-      <div className="sidebar-footer">
-        <LockKeyhole size={18} />
-        <p>All data is securely synced and updated in real-time.</p>
-      </div>
-    </aside>
-  );
-}
-
-function Topbar({ user, onLogout }) {
-  return (
-    <header className="topbar">
-      <div>
-        <p className="eyebrow">Authenticated {user.role} session</p>
-        <h1>Welcome back, {user.name}.</h1>
-      </div>
-      <div className="profile-chip">
-        <div className="avatar">{user.name.slice(0, 1)}</div>
-        <div>
-          <strong>{user.name}</strong>
-          <span>{user.email}</span>
+      <div className="sidebar-footer" style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '16px', background: 'rgba(255, 255, 255, 0.08)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.11)' }}>
+        <div className="avatar" style={{ width: '36px', height: '36px', minWidth: '36px' }}>{user.name.slice(0, 1)}</div>
+        <div style={{ overflow: 'hidden', textAlign: 'left' }}>
+          <strong style={{ display: 'block', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.9rem' }}>{user.name}</strong>
+          <span style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</span>
         </div>
-        <button className="icon-btn" onClick={onLogout} title="Logout">
+        <button onClick={onLogout} style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', padding: '4px' }} title="Logout">
           <LogOut size={18} />
         </button>
       </div>
-    </header>
+    </aside>
   );
 }
 
