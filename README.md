@@ -281,8 +281,4 @@ npm run db:psql:supabase # Connects to the Supabase database via CLI
 3. Add the `VITE_API_URL` environment variable pointing to your deployed Render backend.
 4. Deploy.
 
----
 
-## License
-
-This project is licensed under the **MIT License**.
