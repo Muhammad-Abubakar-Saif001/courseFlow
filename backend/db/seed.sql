@@ -2,6 +2,7 @@ insert into users (id, name, email, password_hash, role, status, joined_at) valu
   ('admin-abubakar', 'Abubakar', 'abubakar@gmail.com', '$2b$10$euMv0cL4G7q2RKw5rd1ryOsO.Tx35yex/RNU58n55QlIHRNJHwC2O', 'admin', 'Active', '2026-01-01'),
   ('admin-awais', 'Awais', 'awais@gmail.com', '$2b$10$euMv0cL4G7q2RKw5rd1ryOsO.Tx35yex/RNU58n55QlIHRNJHwC2O', 'admin', 'Active', '2026-01-01'),
   ('admin-bilal', 'Bilal', 'bilal@gmail.com', '$2b$10$euMv0cL4G7q2RKw5rd1ryOsO.Tx35yex/RNU58n55QlIHRNJHwC2O', 'admin', 'Active', '2026-01-01'),
+  ('admin-james', 'James', 'james@gmail.com', '$2b$10$AZseCWHARNYkz3eCUmSpfOe2aMutSXjeS3KkuCmXFTBfe2FOkUZjq', 'admin', 'Active', '2026-05-19'),
   ('instructor-daniel', 'Daniel Morris', 'daniel@courseflow.io', '$2b$10$euMv0cL4G7q2RKw5rd1ryOsO.Tx35yex/RNU58n55QlIHRNJHwC2O', 'instructor', 'Active', '2026-01-12'),
   ('instructor-nora', 'Nora Patel', 'nora@courseflow.io', '$2b$10$euMv0cL4G7q2RKw5rd1ryOsO.Tx35yex/RNU58n55QlIHRNJHwC2O', 'instructor', 'Active', '2026-02-04'),
   ('student-ayesha', 'Ayesha Khan', 'ayesha@student.com', '$2b$10$euMv0cL4G7q2RKw5rd1ryOsO.Tx35yex/RNU58n55QlIHRNJHwC2O', 'student', 'Active', '2026-03-11'),
