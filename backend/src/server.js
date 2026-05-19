@@ -150,6 +150,60 @@ app.post('/api/auth/change-password', requireAuth, async (req, res, next) => {
   }
 });
 
+app.get('/api/dashboard/summary', requireAuth, async (req, res, next) => {
+  try {
+    const { role, sub } = req.user;
+    const summary = {};
+
+    if (role === 'admin') {
+      const [courses, users, instructors, roster, pending] = await Promise.all([
+        query('select * from courses order by students desc, title asc'),
+        query('select id, name, email, role, status, joined_at from users order by joined_at desc, name asc'),
+        query("select id, name, email, role, status, joined_at from users where role = 'instructor' and status = 'Active' order by name asc"),
+        query(`select c.id as course_id, c.title as course_title, u.id as student_id, u.name as student_name, u.email as student_email, e.progress, e.enrolled_at
+               from courses c join enrollments e on e.course_id = c.id join users u on u.id = e.student_id order by c.title asc, u.name asc`),
+        query(`select e.id as enrollment_id, u.name as student_name, u.email as student_email, c.title as course_title, e.enrolled_at
+               from enrollments e join users u on u.id = e.student_id join courses c on c.id = e.course_id where e.status = 'Pending' order by e.enrolled_at asc`)
+      ]);
+      summary.courses = courses.rows.map(publicCourse);
+      summary.users = users.rows.map(publicUser);
+      summary.instructors = instructors.rows.map(publicUser);
+      summary.studentRoster = roster.rows.map(row => ({
+        courseId: row.course_id, courseTitle: row.course_title, studentId: row.student_id,
+        studentName: row.student_name, studentEmail: row.student_email, progress: Number(row.progress),
+        enrolled: row.enrolled_at?.toISOString?.().slice(0, 10) || row.enrolled_at
+      }));
+      summary.pendingEnrollments = pending.rows;
+    } else if (role === 'instructor') {
+      const [courses, roster] = await Promise.all([
+        query('select * from courses where instructor_id = $1 order by students desc', [sub]),
+        query(`select c.id as course_id, c.title as course_title, u.id as student_id, u.name as student_name, u.email as student_email, e.progress, e.enrolled_at
+               from courses c join enrollments e on e.course_id = c.id join users u on u.id = e.student_id where c.instructor_id = $1 order by c.title asc, u.name asc`, [sub])
+      ]);
+      summary.courses = courses.rows.map(publicCourse);
+      summary.studentRoster = roster.rows.map(row => ({
+        courseId: row.course_id, courseTitle: row.course_title, studentId: row.student_id,
+        studentName: row.student_name, studentEmail: row.student_email, progress: Number(row.progress),
+        enrolled: row.enrolled_at?.toISOString?.().slice(0, 10) || row.enrolled_at
+      }));
+    } else { // student
+      const [courses, enrollments] = await Promise.all([
+        query("select * from courses where status = 'Approved' order by students desc"),
+        query(`select c.*, e.progress, e.status as enrollment_status, e.completed_lessons
+               from enrollments e join courses c on c.id = e.course_id where e.student_id = $1 order by e.enrolled_at desc`, [sub])
+      ]);
+      summary.courses = courses.rows.map(publicCourse);
+      summary.enrolledCourses = enrollments.rows.map(row => ({
+        ...publicCourse(row), enrollmentStatus: row.enrollment_status, completedLessons: row.completed_lessons || []
+      }));
+    }
+
+    res.json(summary);
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get('/api/users', requireAuth, requireRole(['admin']), async (_req, res, next) => {
   try {
     const result = await query(

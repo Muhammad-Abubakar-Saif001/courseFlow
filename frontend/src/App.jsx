@@ -74,38 +74,18 @@ export function App() {
     }
   }
 
-  async function loadData(authToken = token, currentUser = user) {
-    const coursePayload = await apiRequest('/courses', { token: authToken });
-    setCourses(coursePayload.courses);
-
-    if (currentUser?.role === 'admin') {
-      const [usersPayload, instructorsPayload, rosterPayload, pendingPayload] = await Promise.all([
-        apiRequest('/users', { token: authToken }),
-        apiRequest('/users/instructors', { token: authToken }),
-        apiRequest('/instructor/students', { token: authToken }),
-        apiRequest('/enrollments/pending', { token: authToken }),
-      ]);
-      setUsers(usersPayload.users);
-      setInstructors(instructorsPayload.instructors);
-      setStudentRoster(rosterPayload.enrollments);
-      setPendingEnrollments(pendingPayload.enrollments);
-      setEnrolledCourses([]);
-    }
-
-    if (currentUser?.role === 'student') {
-      const enrolledPayload = await apiRequest('/me/enrollments', { token: authToken });
-      setEnrolledCourses(enrolledPayload.courses);
-      setUsers([]);
-      setInstructors([]);
-      setStudentRoster([]);
-    }
-
-    if (currentUser?.role === 'instructor') {
-      const rosterPayload = await apiRequest('/instructor/students', { token: authToken });
-      setStudentRoster(rosterPayload.enrollments);
-      setUsers([]);
-      setInstructors([]);
-      setEnrolledCourses([]);
+  async function loadData(authToken = token) {
+    try {
+      const summary = await apiRequest('/dashboard/summary', { token: authToken });
+      
+      setCourses(summary.courses || []);
+      setUsers(summary.users || []);
+      setInstructors(summary.instructors || []);
+      setStudentRoster(summary.studentRoster || []);
+      setPendingEnrollments(summary.pendingEnrollments || []);
+      setEnrolledCourses(summary.enrolledCourses || []);
+    } catch (error) {
+      showToast('Failed to load dashboard data', 'error');
     }
   }
 
