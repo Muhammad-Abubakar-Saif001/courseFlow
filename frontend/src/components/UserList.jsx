@@ -1,6 +1,11 @@
 import React from 'react';
+import { Mail } from 'lucide-react';
 
 export function UserList({ enrollments }) {
+  const openGmail = (email) => {
+    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${email}`, '_blank');
+  };
+
   return (
     <section className="view-stack">
       <div className="section-heading">
@@ -22,7 +27,14 @@ export function UserList({ enrollments }) {
           {enrollments.map((item) => (
             <div key={`${item.courseId}-${item.studentId}`} className="table-row roster-row">
               <span>{item.studentName}</span>
-              <span>{item.studentEmail}</span>
+              <span 
+                onClick={() => openGmail(item.studentEmail)} 
+                style={{ cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px' }}
+                title="Send email via Gmail"
+              >
+                <Mail size={14} />
+                {item.studentEmail}
+              </span>
               <span>{item.courseTitle}</span>
               <span>{item.progress}%</span>
               <span>{item.enrolled}</span>

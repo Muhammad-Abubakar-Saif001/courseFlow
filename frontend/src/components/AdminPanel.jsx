@@ -149,6 +149,14 @@ export function AdminPanel({ users, courses, instructors, pendingEnrollments, cr
                 <div key={enrollment.enrollment_id} className="moderation-item">
                   <div>
                     <strong>{enrollment.student_name}</strong>
+                    <span 
+                      onClick={() => openGmail(enrollment.student_email)} 
+                      style={{ cursor: 'pointer', color: 'var(--primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      title="Send email via Gmail"
+                    >
+                      <Mail size={12} />
+                      {enrollment.student_email}
+                    </span>
                     <span>{enrollment.course_title}</span>
                   </div>
                   <div className="hero-actions">
