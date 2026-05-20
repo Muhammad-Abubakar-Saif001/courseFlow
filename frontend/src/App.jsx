@@ -11,6 +11,7 @@ import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
 import Learning from './components/Learning';
 import CourseViewer from './components/CourseViewer';
+import InstructorList from './components/InstructorList';
 import AdminPanel from './components/AdminPanel';
 import PaymentModal from './components/PaymentModal';
 import ChangePasswordModal from './components/ChangePasswordModal';
@@ -353,6 +354,10 @@ export function App() {
 
         {activeView === 'roster' && (
           <UserList enrollments={studentRoster} />
+        )}
+
+        {activeView === 'instructors' && (
+          <InstructorList instructors={instructors} courses={courses} />
         )}
 
         {activeView === 'admin' && user.role === 'admin' && (

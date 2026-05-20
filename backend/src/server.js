@@ -175,27 +175,31 @@ app.get('/api/dashboard/summary', requireAuth, async (req, res, next) => {
       }));
       summary.pendingEnrollments = pending.rows;
     } else if (role === 'instructor') {
-      const [courses, roster] = await Promise.all([
+      const [courses, roster, instructors] = await Promise.all([
         query('select * from courses where instructor_id = $1 order by students desc', [sub]),
         query(`select c.id as course_id, c.title as course_title, u.id as student_id, u.name as student_name, u.email as student_email, e.progress, e.enrolled_at
-               from courses c join enrollments e on e.course_id = c.id join users u on u.id = e.student_id where c.instructor_id = $1 order by c.title asc, u.name asc`, [sub])
+               from courses c join enrollments e on e.course_id = c.id join users u on u.id = e.student_id where c.instructor_id = $1 order by c.title asc, u.name asc`, [sub]),
+        query("select id, name, email, role, status, joined_at from users where role = 'instructor' and status = 'Active' order by name asc")
       ]);
       summary.courses = courses.rows.map(publicCourse);
+      summary.instructors = instructors.rows.map(publicUser);
       summary.studentRoster = roster.rows.map(row => ({
         courseId: row.course_id, courseTitle: row.course_title, studentId: row.student_id,
         studentName: row.student_name, studentEmail: row.student_email, progress: Number(row.progress),
         enrolled: row.enrolled_at?.toISOString?.().slice(0, 10) || row.enrolled_at
       }));
     } else { // student
-      const [courses, enrollments] = await Promise.all([
+      const [courses, enrollments, instructors] = await Promise.all([
         query("select * from courses where status = 'Approved' order by students desc"),
         query(`select c.*, e.progress, e.status as enrollment_status, e.completed_lessons
-               from enrollments e join courses c on c.id = e.course_id where e.student_id = $1 order by e.enrolled_at desc`, [sub])
+               from enrollments e join courses c on c.id = e.course_id where e.student_id = $1 order by e.enrolled_at desc`, [sub]),
+        query("select id, name, email, role, status, joined_at from users where role = 'instructor' and status = 'Active' order by name asc")
       ]);
       summary.courses = courses.rows.map(publicCourse);
       summary.enrolledCourses = enrollments.rows.map(row => ({
         ...publicCourse(row), enrollmentStatus: row.enrollment_status, completedLessons: row.completed_lessons || []
       }));
+      summary.instructors = instructors.rows.map(publicUser);
     }
 
     res.json(summary);

@@ -36,7 +36,7 @@ export function Dashboard({ user, stats, courses, enrolledCourses, studentRoster
             icon={UserCog} 
             label="Instructors" 
             value={stats.instructors} 
-            onClick={() => user.role === 'admin' && setActiveView('admin')}
+            onClick={() => setActiveView('instructors')}
           />
           <Metric icon={Users} label="Students" value={stats.totalStudents} />
         </div>

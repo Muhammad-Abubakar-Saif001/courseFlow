@@ -28,6 +28,7 @@ export function Footer({ role, setActiveView }) {
           <ul>
             <li><span onClick={() => setActiveView('dashboard')}>Dashboard</span></li>
             <li><span onClick={() => setActiveView('marketplace')}>Marketplace</span></li>
+            <li><span onClick={() => setActiveView('instructors')}>Instructors</span></li>
             {role === 'student' && <li><span onClick={() => setActiveView('learning')}>My Learning</span></li>}
             {(role === 'instructor' || role === 'admin') && <li><span onClick={() => setActiveView('roster')}>Student Roster</span></li>}
           </ul>
