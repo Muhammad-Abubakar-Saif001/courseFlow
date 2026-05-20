@@ -161,12 +161,25 @@ export function AdminPanel({ users, courses, instructors, pendingEnrollments, cr
             <PanelHeader icon={ClipboardCheck} title="Instructors" />
             <div className="status-list">
               {instructors.map((item) => (
-                <div key={item.id} className="status-row">
+                <div key={item.id} className="status-row" style={{ gridTemplateColumns: 'auto 1fr auto', cursor: 'default' }}>
                   <span className="status-dot published" />
-                  <span>{item.name}</span>
-                  <strong>{item.status}</strong>
+                  <div>
+                    <span style={{ display: 'block', fontWeight: 'bold' }}>{item.name}</span>
+                    <span 
+                      onClick={() => openGmail(item.email)} 
+                      style={{ cursor: 'pointer', color: 'var(--primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <Mail size={12} />
+                      {item.email}
+                    </span>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <strong>{item.status}</strong>
+                    <small style={{ display: 'block', fontSize: '0.75rem', color: 'var(--muted)' }}>Joined: {item.joined}</small>
+                  </div>
                 </div>
               ))}
+              {!instructors.length && <p className="muted">No instructors yet.</p>}
             </div>
           </section>
 
