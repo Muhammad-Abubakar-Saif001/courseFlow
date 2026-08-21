@@ -66,10 +66,21 @@ export function EventList({
   );
 }
 
+const CATEGORY_IMAGES = {
+  Development: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80",
+  Business: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80",
+  Data: "https://images.unsplash.com/photo-1551288049-bbbda536339a?auto=format&fit=crop&w=600&q=80",
+  Design: "https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=600&q=80",
+  Security: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80",
+  Operations: "https://images.unsplash.com/photo-1454165205744-3b78555e5572?auto=format&fit=crop&w=600&q=80",
+  Default: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80",
+};
+
 export function CourseCard({ user, course, onEnroll, onEdit, onDelete, onDecision, setActiveView }) {
+  const coverImage = CATEGORY_IMAGES[course.category] || CATEGORY_IMAGES.Default;
   return (
     <article className="course-card">
-      <div className="course-cover">
+      <div className="course-cover" style={{ backgroundImage: `linear-gradient(135deg, rgba(15, 118, 110, 0.86), rgba(194, 65, 12, 0.72)), url(${coverImage})` }}>
         <span>{course.category}</span>
         <strong>PKR {course.price}</strong>
       </div>
