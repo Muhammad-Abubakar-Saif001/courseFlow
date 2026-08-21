@@ -11,9 +11,26 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 4000;
 
+const allowedOrigins = [
+  process.env.CLIENT_ORIGIN,
+  'http://127.0.0.1:5173',
+  'http://localhost:5173',
+  'https://web-project-courseflow.vercel.app',
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || 'http://127.0.0.1:5173',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        process.env.NODE_ENV !== 'production'
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   }),
 );
@@ -68,6 +85,23 @@ async function getUserById(id) {
   );
   return result.rows[0] ? publicUser(result.rows[0]) : null;
 }
+
+app.get('/', (_req, res) => {
+  res.json({
+    status: 'online',
+    message: 'CourseFlow Backend API is running successfully.',
+    health: '/api/health',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/api', (_req, res) => {
+  res.json({
+    status: 'online',
+    message: 'CourseFlow API endpoints are active.',
+    health: '/api/health',
+  });
+});
 
 app.get('/api/health', async (_req, res, next) => {
   try {
