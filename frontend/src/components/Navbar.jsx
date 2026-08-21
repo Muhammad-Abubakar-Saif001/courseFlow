@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, LayoutDashboard, LibraryBig, GraduationCap, Users, ShieldCheck, LockKeyhole, LogOut } from 'lucide-react';
+import { BookOpen, LayoutDashboard, LibraryBig, GraduationCap, Users, ShieldCheck, LockKeyhole, LogOut, UserCog } from 'lucide-react';
 
 export function Navbar({ activeView, setActiveView, role, theme, toggleTheme, user, onLogout, onChangePassword }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
